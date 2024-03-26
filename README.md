@@ -1,1 +1,0 @@
-# Specialization_week_RAG
