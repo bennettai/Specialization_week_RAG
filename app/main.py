@@ -8,6 +8,10 @@ from llama_index.core import SimpleDirectoryReader
 import chromadb
 import os
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+import sys
+
+__import__('pysqlite3')
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 load_dotenv()
 

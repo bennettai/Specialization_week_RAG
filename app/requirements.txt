@@ -6,3 +6,4 @@ llama-index-llms-gemini
 llama-index
 google-generativeai
 streamlit
+pysqlite3-binary
