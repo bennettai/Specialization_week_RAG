@@ -1,7 +1,6 @@
 import streamlit as st
 from llama_index.core import VectorStoreIndex
 from llama_index.llms.gemini import Gemini
-from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext
 from dotenv import load_dotenv
 from llama_index.core import SimpleDirectoryReader
@@ -9,9 +8,10 @@ import chromadb
 import os
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import sys
-
 __import__('pysqlite3')
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+from llama_index.vector_stores.chroma import ChromaVectorStore
+
 
 load_dotenv()
 
