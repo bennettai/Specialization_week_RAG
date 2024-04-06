@@ -18,7 +18,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
 embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en")
-loader = SimpleDirectoryReader(input_dir="./", required_exts=[".pdf"])
+loader = SimpleDirectoryReader(input_dir="./app", required_exts=[".pdf"])
 documents = loader.load_data()
 llm = Gemini(api_key=GOOGLE_API_KEY)
 db = chromadb.PersistentClient(path="./chroma_db")
