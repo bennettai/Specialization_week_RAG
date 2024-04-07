@@ -1,0 +1,7 @@
+llama-index-readers-file
+llama-index-llms-gemini
+llama-index
+google-generativeai
+streamlit
+pandas
+python-dotenv
