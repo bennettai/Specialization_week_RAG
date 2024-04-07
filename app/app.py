@@ -16,7 +16,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
 llm = Gemini(api_key=GOOGLE_API_KEY)
-df=pd.read_csv("course_information.csv")
+df=pd.read_csv("app/course_information.csv")
 
 instruction_str = (
     "1. Convert the query to executable Python code using Pandas.\n"
