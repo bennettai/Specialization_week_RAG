@@ -8,6 +8,6 @@ RUN pip install --no-cache-dir -r ./app/requirements.txt --timeout=100
 
 COPY ./app/ ./app/
 
-CMD ["streamlit", "run", "main.py"]
+CMD ["streamlit", "run", "app.py"]
 
 EXPOSE 8501

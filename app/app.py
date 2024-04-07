@@ -1,36 +1,92 @@
-import sys
-# __import__('pysqlite3')
-# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import streamlit as st
-from llama_index.core import VectorStoreIndex
+import pandas as pd
 from llama_index.llms.gemini import Gemini
-from llama_index.core import StorageContext
 from dotenv import load_dotenv
-from llama_index.core import SimpleDirectoryReader
 import os
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.vector_stores.chroma import ChromaVectorStore
-import chromadb
-
-
+from llama_index.core.query_pipeline import (
+    QueryPipeline as QP,
+    Link,
+    InputComponent,
+)
+from llama_index.core.query_engine.pandas import PandasInstructionParser
+from llama_index.core import PromptTemplate
 load_dotenv()
 
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
-embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en")
-loader = SimpleDirectoryReader(input_dir="./app", required_exts=[".pdf"])
-documents = loader.load_data()
 llm = Gemini(api_key=GOOGLE_API_KEY)
-db = chromadb.PersistentClient(path="./chroma_db")
-chroma_collection = db.get_or_create_collection("quickstart")
-vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-storage_context = StorageContext.from_defaults(vector_store=vector_store)
-index = VectorStoreIndex.from_documents(
-    documents, storage_context=storage_context, embed_model=embed_model
+df=pd.read_csv("course_information.csv")
+
+instruction_str = (
+    "1. Convert the query to executable Python code using Pandas.\n"
+    "2. The final line of code should be a Python expression that can be called with the `eval()` function.\n"
+    "3. The code should represent a solution to the query.\n"
+    "4. PRINT ONLY THE EXPRESSION.\n"
+    "5. Do not quote the expression.\n"
+    "6. The line of code only use the provided keys : course_code,course_name,credits,L_T_P_split,total_contact_hours,module_1_info,module_2_info,module_3_info,module_4_info,studio_lab_work,recommended_learning_resources\n"
 )
-query_engine = index.as_query_engine(llm=llm)
+
+pandas_prompt_str = (
+    "You are working with a pandas dataframe in Python.\n"
+    "The name of the dataframe is `df`.\n"
+    "This is the result of `print(df.head())`:\n"
+    "{df_str}\n\n"
+    "Follow these instructions:\n"
+    "{instruction_str}\n"
+    "Query: {query_str}\n\n"
+    "Expression:"
+)
+response_synthesis_prompt_str = (
+    """Given an input question, synthesize a response from the query results, your name is ReLU
+    the AIS Chatbot that helps answer queries related to courses, provided by the college Bennett University.
+    You are created by Aviral Jain\n
+    """
+    "Query: {query_str}\n\n"
+    "Pandas Instructions (optional):\n{pandas_instructions}\n\n"
+    "Pandas Output: {pandas_output}\n\n"
+    "Response: "
+)
+
+pandas_prompt = PromptTemplate(pandas_prompt_str).partial_format(
+    instruction_str=instruction_str, df_str=df.head(5)
+)
+pandas_output_parser = PandasInstructionParser(df)
+response_synthesis_prompt = PromptTemplate(response_synthesis_prompt_str)
+
+qp = QP(
+    modules={
+        "input": InputComponent(),
+        "pandas_prompt": pandas_prompt,
+        "llm1": llm,
+        "pandas_output_parser": pandas_output_parser,
+        "response_synthesis_prompt": response_synthesis_prompt,
+        "llm2": llm,
+    },
+    verbose=True,
+)
+qp.add_chain(["input", "pandas_prompt", "llm1", "pandas_output_parser"])
+qp.add_links(
+    [
+        Link("input", "response_synthesis_prompt", dest_key="query_str"),
+        Link(
+            "llm1", "response_synthesis_prompt", dest_key="pandas_instructions"
+        ),
+        Link(
+            "pandas_output_parser",
+            "response_synthesis_prompt",
+            dest_key="pandas_output",
+        ),
+    ]
+)
+# add link from response synthesis prompt to llm2
+qp.add_link("response_synthesis_prompt", "llm2")
+
+
 def perform_query(query):
-    response = query_engine.query(query)
+    response = qp.run(
+    query_str=query
+)
     return response
 
 st.title("Specialization Week FAQ Query System")
@@ -41,6 +97,6 @@ if st.button("Search"):
     if query_input:
         response = perform_query(query_input)
         st.write("Response:")
-        st.write(response.response)
+        st.write(response)
     else:
         st.write("Please enter a query.")

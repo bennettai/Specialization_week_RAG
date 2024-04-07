@@ -7,3 +7,5 @@ llama-index
 google-generativeai
 streamlit
 pysqlite3-binary
+pandas
+llama-index-readers-file
