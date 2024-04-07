@@ -4,3 +4,4 @@ llama-index
 google-generativeai
 streamlit
 pandas
+python-dotenv
