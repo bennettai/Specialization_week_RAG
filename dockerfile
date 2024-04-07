@@ -1,12 +1,12 @@
 FROM python:3.11-slim
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/
 
-COPY ./app/requirements.txt ./app/
+COPY ./requirements.txt .
 
-RUN pip install --no-cache-dir -r ./app/requirements.txt --timeout=100
+RUN pip install --no-cache-dir -r requirements.txt --timeout=100
 
-COPY ./app/ ./app/
+COPY . .
 
 CMD ["streamlit", "run", "app.py"]
 
